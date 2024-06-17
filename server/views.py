@@ -3,8 +3,14 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework import status
+
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+
 from django.contrib.auth.models import User
+
 
 @api_view(['POST'])
 def login(request):
@@ -13,7 +19,7 @@ def login(request):
     # Con get_object_or_404 evitamos tener que validar si existe el Usuario
     #user = get_object_or_404(User, username=request.data['username'])#username=serializer.data['username']
     user = get_object_or_404(User, username=request.data['username'])
-    if not user.check_password(resquest.data['password']):
+    if not user.check_password(request.data['password']):
         return Response({"Error", "Invalid password"}, status=status.HTTP_400_BAD_REQUEST)
 
     token, create = Token.objects.get_or_create(user=user)
@@ -40,5 +46,10 @@ def register(request):
 
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def profile(request):
-    return Response({})
+    print(request.user)
+
+    # return Response("You are loged with {}".format(request.user.username), status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
